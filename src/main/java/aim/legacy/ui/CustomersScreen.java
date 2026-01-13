@@ -1,7 +1,6 @@
 package aim.legacy.ui;
 
 import aim.legacy.domain.Customer;
-import aim.legacy.services.OrderService;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -10,18 +9,18 @@ import java.util.List;
 
 /**
  * CustomersScreen - screen for managing customers.
- * Legacy pattern: Manual UI construction with tight coupling to service.
+ * TECHNICAL DEBT: Direct access to global state, no abstraction
  */
 public class CustomersScreen extends JPanel {
 
-    private final OrderService orderService;
+    private final MainApp mainApp;
     
     private JTable customerTable;
     private DefaultTableModel tableModel;
     private JTextField searchField;
     
-    public CustomersScreen(OrderService orderService) {
-        this.orderService = orderService;
+    public CustomersScreen(MainApp mainApp) {
+        this.mainApp = mainApp;
         setupUI();
         loadCustomers();
     }
@@ -76,10 +75,10 @@ public class CustomersScreen extends JPanel {
         loadCustomers();
     }
     
+    // TECHNICAL DEBT: Direct access to static list
     private void loadCustomers() {
         tableModel.setRowCount(0);
-        List<Customer> customers = orderService.getAllCustomers();
-        for (Customer customer : customers) {
+        for (Customer customer : MainApp.allCustomers) {
             tableModel.addRow(new Object[]{
                 customer.getId(),
                 customer.getName(),
@@ -90,6 +89,7 @@ public class CustomersScreen extends JPanel {
         }
     }
     
+    // TECHNICAL DEBT: Business logic in UI - manual search implementation
     private void searchCustomers() {
         String query = searchField.getText().trim();
         if (query.isEmpty()) {
@@ -98,15 +98,17 @@ public class CustomersScreen extends JPanel {
         }
         
         tableModel.setRowCount(0);
-        List<Customer> customers = orderService.searchCustomers(query);
-        for (Customer customer : customers) {
-            tableModel.addRow(new Object[]{
-                customer.getId(),
-                customer.getName(),
-                customer.getEmail(),
-                customer.getPhone(),
-                customer.getAddress()
-            });
+        String lowerQuery = query.toLowerCase();
+        for (Customer customer : MainApp.allCustomers) {
+            if (customer.getName().toLowerCase().contains(lowerQuery)) {
+                tableModel.addRow(new Object[]{
+                    customer.getId(),
+                    customer.getName(),
+                    customer.getEmail(),
+                    customer.getPhone(),
+                    customer.getAddress()
+                });
+            }
         }
     }
     
@@ -116,7 +118,10 @@ public class CustomersScreen extends JPanel {
         
         Customer customer = dialog.getCustomer();
         if (customer != null) {
-            orderService.saveCustomer(customer);
+            // TECHNICAL DEBT: Direct manipulation of global state
+            customer.setId(MainApp.getNextCustomerId());
+            MainApp.allCustomers.add(customer);
+            MainApp.saveCustomers();
             loadCustomers();
         }
     }
@@ -129,14 +134,31 @@ public class CustomersScreen extends JPanel {
         }
         
         Long id = (Long) tableModel.getValueAt(selectedRow, 0);
-        Customer customer = orderService.getCustomer(id);
+        
+        // TECHNICAL DEBT: Linear search through list
+        Customer customer = null;
+        for (Customer c : MainApp.allCustomers) {
+            if (c.getId().equals(id)) {
+                customer = c;
+                break;
+            }
+        }
+        
+        if (customer == null) return;
         
         CustomerDialog dialog = new CustomerDialog((Frame) SwingUtilities.getWindowAncestor(this), customer);
         dialog.setVisible(true);
         
         Customer updatedCustomer = dialog.getCustomer();
         if (updatedCustomer != null) {
-            orderService.saveCustomer(updatedCustomer);
+            // TECHNICAL DEBT: Replace in place
+            for (int i = 0; i < MainApp.allCustomers.size(); i++) {
+                if (MainApp.allCustomers.get(i).getId().equals(id)) {
+                    MainApp.allCustomers.set(i, updatedCustomer);
+                    break;
+                }
+            }
+            MainApp.saveCustomers();
             loadCustomers();
         }
     }
@@ -155,7 +177,10 @@ public class CustomersScreen extends JPanel {
         
         if (confirm == JOptionPane.YES_OPTION) {
             Long id = (Long) tableModel.getValueAt(selectedRow, 0);
-            orderService.deleteCustomer(id);
+            
+            // TECHNICAL DEBT: Remove from global list directly
+            MainApp.allCustomers.removeIf(c -> c.getId().equals(id));
+            MainApp.saveCustomers();
             loadCustomers();
         }
     }

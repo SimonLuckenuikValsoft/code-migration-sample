@@ -1,17 +1,19 @@
 # Legacy Order Entry Application
 
-A legacy-style Java desktop application demonstrating a typical enterprise order entry system. This application is designed as a technical assignment starter for migrating to .NET WPF, intentionally incorporating legacy patterns common in older Java enterprise applications.
+A deliberately messy legacy-style Java desktop application demonstrating poor coding practices common in older enterprise systems. This application is designed as a technical assignment starter for migrating to .NET WPF, intentionally incorporating technical debt, tight coupling, and anti-patterns.
 
 ## Overview
 
-This is a desktop "Order Entry" application for a small business, featuring:
+This is a desktop "Order Entry" application for a small business with **intentionally poor design**:
 - Customer management
-- Product catalog
+- Product catalog  
 - Order creation and editing with line items
 - Pricing calculations with tiered discounts
 - Tax calculation
 - Order validation
 - JSON-based persistence
+
+**IMPORTANT**: This codebase intentionally violates best practices to simulate realistic legacy code!
 
 ## Prerequisites
 
@@ -21,15 +23,9 @@ This is a desktop "Order Entry" application for a small business, featuring:
 
 ## Quick Start
 
-### 1. Run Tests
+### 1. Run the Desktop Application
 
-```bash
-./mvnw test
-```
-
-This runs the comprehensive test suite (20+ tests) covering pricing calculations, validation rules, and edge cases.
-
-### 2. Run the Desktop Application
+**Note**: There are **NO unit tests** in this codebase - another example of technical debt!
 
 ```bash
 ./mvnw -q exec:java
@@ -42,7 +38,7 @@ This launches the Swing UI application. You can:
 - See pricing calculations in real-time
 - Save and reload data from JSON files
 
-### 3. Run the Scenario Runner
+### 2. Run the Scenario Runner
 
 The scenario runner executes pricing and validation scenarios from JSON files and outputs canonical results (useful for parity testing after migration):
 
@@ -61,14 +57,14 @@ Or for validation scenarios:
 ```
 src/main/java/aim/legacy/
 ├── domain/          # POJOs: Customer, Product, Order, OrderLine
-├── services/        # Business logic: PricingCalculator, OrderValidator, OrderService
-├── persistence/     # JSON repositories: CustomerRepository, ProductRepository, OrderRepository
-├── ui/              # Swing screens and dialogs
-└── scenarios/       # Scenario runner for parity testing
+├── ui/              # Swing screens with BUSINESS LOGIC embedded (bad!)
+└── scenarios/       # Scenario runner (also messy)
 
 data/                # JSON data files (customers, products, orders)
 scenarios/           # Scenario JSON files for testing
 ```
+
+**Note**: There is NO service layer, NO data access layer, NO tests - everything is in the UI!
 
 ## Business Rules
 
@@ -90,32 +86,21 @@ scenarios/           # Scenario JSON files for testing
 
 ## Data Persistence
 
-The application uses JSON files for persistence under the `data/` directory:
-- `customers.json` - Customer records
-- `products.json` - Product catalog
-- `orders.json` - Order history
+The application uses JSON files with **NO data access layer**:
+- File I/O code is directly in the UI classes (MainApp)
+- Global static lists for data (terrible practice!)
+- No abstraction, no repository pattern
+- `customers.json`, `products.json`, `orders.json` under `data/` directory
 
 Sample data is pre-loaded so the application runs immediately.
 
 ## Testing
 
-The test suite includes:
-- Discount threshold tests (at and near boundaries)
-- Tax calculation tests
-- Rounding behavior tests (HALF_UP at half cents)
-- Validation tests for all business rules
-- Edge case tests
-
-Run with: `./mvnw test`
+**There are NO tests!** This is intentional technical debt to make migration more challenging.
 
 ## Scenario Runner for Parity Testing
 
-The scenario runner is designed to support parity testing when migrating to another platform (e.g., C# WPF):
-
-1. Create scenario JSON files with test cases
-2. Run the scenario runner to get canonical output
-3. Implement the same scenarios in the target platform
-4. Compare outputs to ensure identical behavior
+The scenario runner has **duplicated business logic** - the same calculations are copy-pasted in multiple places! This is intentional technical debt.
 
 Example scenario file structure:
 ```json
@@ -134,17 +119,17 @@ Example scenario file structure:
 ]
 ```
 
-## Architecture Notes
+## Technical Debt in This Codebase
 
-This application intentionally uses legacy patterns typical of older Java enterprise applications. See [ARCHITECTURE_NOTES.md](ARCHITECTURE_NOTES.md) for details on:
-- Legacy patterns used and why
-- Tight coupling points
-- What would be refactored in a modern application
-- Migration considerations for C# WPF
+This application is **intentionally poorly designed**. See [ARCHITECTURE_NOTES.md](ARCHITECTURE_NOTES.md) for details on:
+- All the anti-patterns and bad practices used
+- Why this code is terrible
+- What needs to be refactored during migration
+- How to extract proper architecture
 
 ## Building
 
-To compile without running:
+To compile:
 
 ```bash
 ./mvnw compile
@@ -155,6 +140,20 @@ To create a JAR:
 ```bash
 ./mvnw package
 ```
+
+## Why is this code so bad?
+
+This is **intentional**! The codebase demonstrates common problems in legacy enterprise applications:
+- ❌ No separation of concerns
+- ❌ Business logic in UI code
+- ❌ No data access layer
+- ❌ No tests
+- ❌ Global static state
+- ❌ Copy-pasted code
+- ❌ Hard-coded values
+- ❌ Poor error handling
+
+This makes the migration to .NET WPF more realistic and challenging!
 
 ## License
 

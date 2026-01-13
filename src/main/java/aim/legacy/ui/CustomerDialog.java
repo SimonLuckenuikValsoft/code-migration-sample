@@ -7,7 +7,6 @@ import java.awt.*;
 
 /**
  * CustomerDialog - dialog for adding/editing customers.
- * Legacy pattern: Simple modal dialog with form fields.
  */
 public class CustomerDialog extends JDialog {
 
@@ -100,7 +99,7 @@ public class CustomerDialog extends JDialog {
     }
     
     private void save() {
-        // Basic validation
+        // TECHNICAL DEBT: Minimal validation
         if (nameField.getText().trim().isEmpty()) {
             JOptionPane.showMessageDialog(this, "Name is required");
             return;

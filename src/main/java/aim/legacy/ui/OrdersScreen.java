@@ -1,21 +1,18 @@
 package aim.legacy.ui;
 
 import aim.legacy.domain.Order;
-import aim.legacy.services.OrderService;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
 
 /**
  * OrdersScreen - screen for managing orders.
- * Legacy pattern: Manual UI construction with tight coupling to service.
+ * TECHNICAL DEBT: Direct access to global state
  */
 public class OrdersScreen extends JPanel {
 
-    private final OrderService orderService;
     private final MainApp mainApp;
     
     private JTable orderTable;
@@ -23,8 +20,7 @@ public class OrdersScreen extends JPanel {
     
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
     
-    public OrdersScreen(OrderService orderService, MainApp mainApp) {
-        this.orderService = orderService;
+    public OrdersScreen(MainApp mainApp) {
         this.mainApp = mainApp;
         setupUI();
         loadOrders();
@@ -71,10 +67,10 @@ public class OrdersScreen extends JPanel {
         loadOrders();
     }
     
+    // TECHNICAL DEBT: Direct access to static list
     private void loadOrders() {
         tableModel.setRowCount(0);
-        List<Order> orders = orderService.getAllOrders();
-        for (Order order : orders) {
+        for (Order order : MainApp.allOrders) {
             tableModel.addRow(new Object[]{
                 order.getId(),
                 order.getCustomerName(),
@@ -90,7 +86,6 @@ public class OrdersScreen extends JPanel {
     private void createOrder() {
         OrderEditorDialog dialog = new OrderEditorDialog(
             (Frame) SwingUtilities.getWindowAncestor(this), 
-            orderService, 
             null);
         dialog.setVisible(true);
         
@@ -107,11 +102,20 @@ public class OrdersScreen extends JPanel {
         }
         
         Long id = (Long) tableModel.getValueAt(selectedRow, 0);
-        Order order = orderService.getOrder(id);
+        
+        // TECHNICAL DEBT: Linear search
+        Order order = null;
+        for (Order o : MainApp.allOrders) {
+            if (o.getId().equals(id)) {
+                order = o;
+                break;
+            }
+        }
+        
+        if (order == null) return;
         
         OrderEditorDialog dialog = new OrderEditorDialog(
             (Frame) SwingUtilities.getWindowAncestor(this), 
-            orderService, 
             order);
         dialog.setVisible(true);
         
@@ -134,7 +138,10 @@ public class OrdersScreen extends JPanel {
         
         if (confirm == JOptionPane.YES_OPTION) {
             Long id = (Long) tableModel.getValueAt(selectedRow, 0);
-            orderService.deleteOrder(id);
+            
+            // TECHNICAL DEBT: Direct manipulation of global list
+            MainApp.allOrders.removeIf(o -> o.getId().equals(id));
+            MainApp.saveOrders();
             loadOrders();
         }
     }

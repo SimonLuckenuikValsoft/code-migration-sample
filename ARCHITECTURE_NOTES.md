@@ -2,257 +2,92 @@
 
 ## Purpose
 
-This document describes the intentionally legacy architectural patterns used in this application, explains why they're considered "legacy," and provides guidance for migration to modern patterns (particularly for a C# WPF migration).
+This document describes the **intentionally terrible** architectural patterns used in this application. This codebase is designed to simulate realistic legacy enterprise code with significant technical debt, making migration to C# WPF a meaningful challenge.
 
-## Legacy Patterns Used (Intentional)
+## Anti-Patterns and Bad Practices Used (Intentional)
 
-### 1. "God Service" Class
+### 1. NO Separation of Concerns
 
-**Where**: `OrderService.java`
+**Where**: Everywhere, but especially `OrderEditorDialog.java`, `MainApp.java`
 
-**Pattern**: Single service class handles all business operations (customers, products, orders). Uses singleton pattern for global access.
+**What's wrong**:
+- Business logic (pricing calculations, validation) is embedded directly in UI event handlers
+- File I/O code is mixed with UI code  
+- No service layer, no data access layer
+- Everything happens in one place
 
-**Why it's legacy**:
-- Violates Single Responsibility Principle
-- Becomes a bottleneck as application grows
-- Difficult to test in isolation
-- Tight coupling to all repositories
+**Why it's bad**:
+- Can't test business logic without UI
+- Can't reuse calculations elsewhere (so we copy-paste them!)
+- Changes to business rules require UI changes
+- Makes migration extremely difficult
 
-**Modern alternative**: Separate services per domain (CustomerService, ProductService, OrderService) with dependency injection.
+**How to fix during migration**: Extract all business logic to separate service classes with interfaces.
 
-**Migration note**: In C# WPF, use separate service classes with interface-based dependency injection (ICustomerService, IOrderService, etc.).
+### 2. Global Static State
 
-### 2. Static Utility Methods
+**Where**: `MainApp.java`
 
-**Where**: `PricingCalculator.java`, `OrderValidator.java`
+**What's wrong**: All data is stored in public static lists - global mutable state is a nightmare!
 
-**Pattern**: Business logic implemented as static methods.
+**How to fix during migration**: Create proper repository classes with dependency injection.
 
-**Why it's legacy**:
-- Cannot be mocked or substituted in tests
-- Hard to extend or override behavior
-- No polymorphism or interface implementation
-- Global state can lead to threading issues
+### 3. Duplicated Business Logic
 
-**Modern alternative**: Instance-based services with interfaces.
+**Where**: `OrderEditorDialog.java` and `ScenarioRunner.java`
 
-**Migration note**: Convert to instance methods on service classes with interfaces (IPricingCalculator, IOrderValidator).
+**What's wrong**: The EXACT same pricing calculation code is copy-pasted in multiple places.
 
-### 3. Anemic Domain Model
+**How to fix during migration**: Create a single `PricingService` class used by both UI and scenario runner.
 
-**Where**: All domain POJOs in `domain/` package
+### 4. No Tests
 
-**Pattern**: Domain objects are pure data containers with getters/setters, no behavior.
+**Where**: Nowhere - there are no tests!
 
-**Why it's legacy**:
-- Business logic scattered across service classes
-- Objects don't protect their own invariants
-- Reduces encapsulation
+**How to fix during migration**: Write comprehensive tests FIRST before migrating any code.
 
-**Modern alternative**: Rich domain models with behavior and validation.
+### 5. File I/O in UI Layer
 
-**Migration note**: C# properties can help, but consider adding validation and business methods to domain objects.
+**Where**: `MainApp.java` static methods - UI code directly writes to files!
 
-### 4. Manual ID Generation
+### 6. Poor Error Handling
 
-**Where**: All repository classes
+**Where**: Throughout - exceptions are caught and ignored.
 
-**Pattern**: Repositories manually loop through collections to find max ID and increment.
+### 7. Manual ID Generation
 
-**Why it's legacy**:
-- Not thread-safe
-- Inefficient for large datasets
-- Prone to ID collisions
+**Where**: Linear search through all items - not thread-safe, O(n) for each insert!
 
-**Modern alternative**: Use database auto-increment or GUID generation.
+### 8. Hard-Coded Business Rules
 
-**Migration note**: Use Entity Framework identity columns or Guid.NewGuid() in C#.
+**Where**: Tax rate and discount tiers hard-coded everywhere.
 
-### 5. Direct Repository Access from Service
+### 9. UI Code Directly Manipulates Domain Objects
 
-**Where**: `OrderService` directly creates and holds repository instances
+**Where**: Domain objects are anemic (just getters/setters), no business logic in domain layer.
 
-**Pattern**: Service class directly instantiates and owns repositories.
+### 10. Linear Search for Everything
 
-**Why it's legacy**:
-- Tight coupling
-- Cannot swap implementations
-- Difficult to test
+**Where**: Every lookup is O(n) - no HashMap or Dictionary usage.
 
-**Modern alternative**: Dependency injection with repository interfaces.
+## Key Lessons from This Codebase
 
-**Migration note**: Use C# dependency injection container with ICustomerRepository, etc.
+**DO NOT** do any of the following in production code:
+- ❌ Put business logic in UI code
+- ❌ Use global static mutable state
+- ❌ Copy-paste code instead of extracting methods
+- ❌ Skip writing tests
+- ❌ Swallow exceptions silently
 
-### 6. UI Tightly Coupled to Services
-
-**Where**: All UI classes in `ui/` package
-
-**Pattern**: UI components directly call service methods and update themselves.
-
-**Why it's legacy**:
-- Violates separation of concerns
-- Business logic can leak into UI
-- Hard to unit test UI logic
-- Cannot easily change UI framework
-
-**Modern alternative**: MVVM pattern with ViewModels mediating between UI and services.
-
-**Migration note**: WPF works best with MVVM - create ViewModels for each screen, use data binding, INotifyPropertyChanged, and Commands.
-
-### 7. Manual UI Construction
-
-**Where**: All Swing dialogs and screens
-
-**Pattern**: UI is constructed programmatically in code.
-
-**Why it's legacy**:
-- Verbose and error-prone
-- Hard to visualize layout
-- Difficult to maintain
-- No designer support
-
-**Modern alternative**: Declarative UI (XAML in WPF).
-
-**Migration note**: Use XAML for UI definition in WPF with data binding to ViewModels.
-
-### 8. Duplicated Logic
-
-**Where**: Product lookup in `OrderService.addLineToOrder()` duplicates logic in `OrderLineDialog`
-
-**Pattern**: Same logic implemented in multiple places.
-
-**Why it's legacy**:
-- Maintenance burden
-- Inconsistency risk
-- Violates DRY principle
-
-**Modern alternative**: Extract to shared methods or services.
-
-**Migration note**: Consolidate logic in ViewModels or shared services.
-
-### 9. Exception-based Validation
-
-**Where**: `OrderValidator` returns error lists, `ValidationException` thrown in service
-
-**Pattern**: Mix of return values and exceptions for validation.
-
-**Why it's legacy**:
-- Inconsistent error handling approach
-- Exceptions for flow control
-
-**Modern alternative**: Result pattern or validation frameworks.
-
-**Migration note**: Use FluentValidation in C# or implement Result<T> pattern.
-
-### 10. In-place Object Mutation
-
-**Where**: `PricingCalculator.calculateOrderPricing()` modifies order directly
-
-**Pattern**: Methods mutate objects passed as parameters.
-
-**Why it's legacy**:
-- Side effects not obvious from method signature
-- Hard to track state changes
-- Makes testing difficult
-
-**Modern alternative**: Immutable objects or explicit return values.
-
-**Migration note**: Consider immutable records in C# or explicit result objects.
-
-## Coupling Points to Address in Migration
-
-### Data Access Layer
-Current: JSON file I/O with manual serialization
-Migration: Entity Framework with SQL Server or SQLite
-
-### Business Logic Layer
-Current: Static methods and singleton service
-Migration: Instance-based services with interfaces, dependency injection
-
-### Presentation Layer
-Current: Swing with manual UI construction
-Migration: WPF with MVVM pattern, XAML, data binding
-
-### Pricing and Validation
-Current: Static utility classes
-Migration: Service classes with interfaces, possibly specification pattern for validation
-
-## What Would Be Extracted for Modern Architecture
-
-### 1. Interfaces
-Define contracts:
-- ICustomerRepository
-- IProductRepository  
-- IOrderRepository
-- IPricingCalculator
-- IOrderValidator
-
-### 2. ViewModels (for WPF)
-Create ViewModels for each screen:
-- CustomerListViewModel
-- OrderListViewModel
-- OrderEditorViewModel
-- Uses INotifyPropertyChanged
-- Implements ICommand for actions
-
-### 3. Dependency Injection Container
-Register all services and repositories for injection.
-
-### 4. Unit of Work Pattern
-For transactional operations across multiple repositories.
-
-### 5. Domain Events
-For decoupling business logic (e.g., OrderCreated event).
-
-### 6. Value Objects
-For money calculations (Money class instead of BigDecimal/decimal).
-
-## Migration Strategy Recommendations
-
-### Phase 1: Backend First
-1. Keep existing domain models initially
-2. Replace repositories with Entity Framework
-3. Create service interfaces
-4. Implement dependency injection
-5. Port business logic to instance methods
-6. Verify with scenario runner (parity testing)
-
-### Phase 2: ViewModels
-1. Create ViewModels for each screen
-2. Implement INotifyPropertyChanged
-3. Create Commands for actions
-4. Test ViewModels in isolation
-
-### Phase 3: WPF UI
-1. Create XAML layouts matching Swing screens
-2. Bind to ViewModels
-3. Implement data templates for lists
-4. Add validation UI feedback
-
-### Phase 4: Refinement
-1. Add rich domain behavior
-2. Implement specification pattern for validation
-3. Add domain events
-4. Improve error handling
-5. Add logging and instrumentation
-
-## Testing Strategy for Migration
-
-### 1. Use Scenario Runner
-The scenario runner provides canonical output for pricing and validation scenarios. Run the same scenarios in C# to verify identical behavior.
-
-### 2. Unit Test Coverage
-Ensure 100% coverage of business logic:
-- Pricing calculations
-- Validation rules
-- Repository operations
-
-### 3. Integration Tests
-Test service layer with in-memory database.
-
-### 4. UI Tests
-Use WPF UI testing frameworks for automated UI testing.
+**DO** these things during migration:
+- ✅ Extract and test business logic FIRST
+- ✅ Create proper abstractions (interfaces)
+- ✅ Use dependency injection
+- ✅ Implement MVVM for WPF
+- ✅ Write comprehensive tests
 
 ## Conclusion
 
-This application demonstrates common legacy patterns that would be refactored in a modern implementation. The tight coupling, static methods, and lack of abstraction make it a good candidate for practicing migration techniques while maintaining business logic integrity through comprehensive testing and scenario-based parity validation.
+This codebase is a **deliberate disaster** to simulate realistic legacy enterprise applications. Every anti-pattern is intentional!
+
+Good luck with the migration! You'll need it with this codebase! 😅
