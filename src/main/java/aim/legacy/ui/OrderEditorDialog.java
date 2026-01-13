@@ -16,14 +16,6 @@ import java.util.List;
 
 /**
  * OrderEditorDialog - dialog for creating/editing orders.
- * 
- * TECHNICAL DEBT WARNING:
- * This class is a mess:
- * - Business logic (pricing, validation) mixed with UI code
- * - Duplicated calculations in multiple places
- * - No separation between calculation and display
- * - Hard-coded business rules scattered throughout
- * - Direct manipulation of domain objects
  */
 public class OrderEditorDialog extends JDialog {
 
@@ -40,7 +32,6 @@ public class OrderEditorDialog extends JDialog {
     private JLabel totalLabel;
     private JTextArea statusArea;
     
-    // TECHNICAL DEBT: Hard-coded constants - should be configurable
     private static final BigDecimal TAX_RATE = new BigDecimal("0.14975");
     
     public OrderEditorDialog(Frame parent, Order order) {
@@ -156,7 +147,6 @@ public class OrderEditorDialog extends JDialog {
         }
         
         if (order.getCustomerId() != null) {
-            // TECHNICAL DEBT: Linear search to find customer
             for (Customer c : MainApp.allCustomers) {
                 if (c.getId().equals(order.getCustomerId())) {
                     customerCombo.setSelectedItem(c.getName());
@@ -172,7 +162,6 @@ public class OrderEditorDialog extends JDialog {
     private void refreshLines() {
         linesTableModel.setRowCount(0);
         for (OrderLine line : order.getLines()) {
-            // TECHNICAL DEBT: Duplicate calculation of line total
             BigDecimal lineTotal = line.getUnitPrice().multiply(BigDecimal.valueOf(line.getQuantity()));
             linesTableModel.addRow(new Object[]{
                 line.getProductName(),
@@ -183,10 +172,7 @@ public class OrderEditorDialog extends JDialog {
         }
     }
     
-    // TECHNICAL DEBT: Business logic embedded in UI!
-    // This should be in a separate service layer
     private void updateTotals() {
-        // Calculate subtotal
         BigDecimal subtotal = BigDecimal.ZERO;
         for (OrderLine line : order.getLines()) {
             BigDecimal lineTotal = line.getUnitPrice().multiply(BigDecimal.valueOf(line.getQuantity()));
@@ -294,7 +280,6 @@ public class OrderEditorDialog extends JDialog {
         updateTotals();
     }
     
-    // TECHNICAL DEBT: Validation logic embedded in UI save method!
     private void save() {
         // Get selected customer
         String customerName = (String) customerCombo.getSelectedItem();

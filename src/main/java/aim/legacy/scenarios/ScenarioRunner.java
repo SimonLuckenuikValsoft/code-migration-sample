@@ -16,12 +16,6 @@ import java.util.TreeMap;
 
 /**
  * ScenarioRunner - runs pricing and validation scenarios from JSON files.
- * 
- * TECHNICAL DEBT WARNING:
- * - All business logic duplicated here instead of reusing
- * - Hard-coded calculations
- * - Messy structure
- * - No abstraction
  */
 public class ScenarioRunner {
 
@@ -53,7 +47,6 @@ public class ScenarioRunner {
 
         ObjectMapper mapper = new ObjectMapper();
         
-        // TECHNICAL DEBT: Reading raw maps instead of using proper classes
         List<Map<String, Object>> scenarios = mapper.readValue(file, List.class);
 
         List<Map<String, Object>> outputs = new ArrayList<>();
@@ -69,7 +62,6 @@ public class ScenarioRunner {
         System.out.println(json);
     }
 
-    // TECHNICAL DEBT: All the business logic duplicated here!
     static Map<String, Object> processScenario(Map<String, Object> input) {
         String scenarioName = (String) input.get("scenarioName");
         Long customerId = input.get("customerId") != null ? 
@@ -104,8 +96,6 @@ public class ScenarioRunner {
             }
         }
 
-        // TECHNICAL DEBT: Copy-pasted calculation logic from OrderEditorDialog!
-        // Calculate subtotal
         BigDecimal subtotal = BigDecimal.ZERO;
         for (OrderLine line : order.getLines()) {
             BigDecimal lineTotal = line.getUnitPrice().multiply(BigDecimal.valueOf(line.getQuantity()));
@@ -113,7 +103,6 @@ public class ScenarioRunner {
         }
         subtotal = subtotal.setScale(2, RoundingMode.HALF_UP);
         
-        // Calculate discount based on tiers (duplicated logic!)
         BigDecimal discount = BigDecimal.ZERO;
         if (subtotal.compareTo(new BigDecimal("2000")) >= 0) {
             discount = subtotal.multiply(new BigDecimal("0.15"));
@@ -124,7 +113,6 @@ public class ScenarioRunner {
         }
         discount = discount.setScale(2, RoundingMode.HALF_UP);
         
-        // Calculate tax (duplicated!)
         BigDecimal taxableAmount = subtotal.subtract(discount);
         BigDecimal tax = taxableAmount.multiply(TAX_RATE);
         tax = tax.setScale(2, RoundingMode.HALF_UP);
@@ -138,7 +126,6 @@ public class ScenarioRunner {
         order.setTax(tax);
         order.setTotal(total);
 
-        // TECHNICAL DEBT: Duplicated validation logic!
         List<String> errors = new ArrayList<>();
         
         if (customerId == null) {

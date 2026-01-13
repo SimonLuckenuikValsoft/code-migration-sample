@@ -16,22 +16,11 @@ import java.util.List;
 
 /**
  * MainApp - main entry point for the desktop application.
- * 
- * TECHNICAL DEBT WARNING:
- * This class violates multiple design principles:
- * - Handles UI, business logic, AND data access all in one place
- * - Static data lists shared across the application
- * - Direct file I/O mixed with UI code
- * - No separation of concerns
- * - No error handling in many places
- * 
- * This is intentionally poor design to simulate legacy code.
  */
 public class MainApp extends JFrame {
 
     private static final String DATA_PATH = "data";
     
-    // TECHNICAL DEBT: Global static state - bad practice!
     public static List<Customer> allCustomers = new ArrayList<>();
     public static List<Product> allProducts = new ArrayList<>();
     public static List<Order> allOrders = new ArrayList<>();
@@ -43,7 +32,6 @@ public class MainApp extends JFrame {
     private CustomersScreen customersScreen;
     private OrdersScreen ordersScreen;
     
-    // TECHNICAL DEBT: Static initializer doing I/O - dangerous!
     static {
         mapper = new ObjectMapper();
         mapper.registerModule(new JavaTimeModule());
@@ -51,7 +39,6 @@ public class MainApp extends JFrame {
         mapper.enable(SerializationFeature.INDENT_OUTPUT);
         mapper.enable(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS);
         
-        // Load data on startup - no error handling!
         loadAllData();
     }
     
@@ -135,7 +122,6 @@ public class MainApp extends JFrame {
         cardLayout.show(mainPanel, "orders");
     }
     
-    // TECHNICAL DEBT: Static method doing file I/O - tightly coupled to file system
     public static void loadAllData() {
         try {
             File customersFile = new File(DATA_PATH, "customers.json");
@@ -156,12 +142,10 @@ public class MainApp extends JFrame {
                     mapper.getTypeFactory().constructCollectionType(List.class, Order.class));
             }
         } catch (IOException e) {
-            // TECHNICAL DEBT: Swallowing exceptions - bad practice!
             e.printStackTrace();
         }
     }
     
-    // TECHNICAL DEBT: More static methods mixing I/O with application logic
     public static void saveCustomers() {
         try {
             File file = new File(DATA_PATH, "customers.json");
@@ -180,7 +164,6 @@ public class MainApp extends JFrame {
         }
     }
     
-    // TECHNICAL DEBT: Manual ID generation in UI layer!
     public static Long getNextCustomerId() {
         Long maxId = 0L;
         for (Customer c : allCustomers) {

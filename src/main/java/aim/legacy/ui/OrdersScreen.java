@@ -9,7 +9,6 @@ import java.time.format.DateTimeFormatter;
 
 /**
  * OrdersScreen - screen for managing orders.
- * TECHNICAL DEBT: Direct access to global state
  */
 public class OrdersScreen extends JPanel {
 
@@ -67,7 +66,6 @@ public class OrdersScreen extends JPanel {
         loadOrders();
     }
     
-    // TECHNICAL DEBT: Direct access to static list
     private void loadOrders() {
         tableModel.setRowCount(0);
         for (Order order : MainApp.allOrders) {
@@ -103,7 +101,6 @@ public class OrdersScreen extends JPanel {
         
         Long id = (Long) tableModel.getValueAt(selectedRow, 0);
         
-        // TECHNICAL DEBT: Linear search
         Order order = null;
         for (Order o : MainApp.allOrders) {
             if (o.getId().equals(id)) {
@@ -139,7 +136,6 @@ public class OrdersScreen extends JPanel {
         if (confirm == JOptionPane.YES_OPTION) {
             Long id = (Long) tableModel.getValueAt(selectedRow, 0);
             
-            // TECHNICAL DEBT: Direct manipulation of global list
             MainApp.allOrders.removeIf(o -> o.getId().equals(id));
             MainApp.saveOrders();
             loadOrders();

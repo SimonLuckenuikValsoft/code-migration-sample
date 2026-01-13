@@ -1,160 +1,213 @@
 # Legacy Order Entry Application
 
-A deliberately messy legacy-style Java desktop application demonstrating poor coding practices common in older enterprise systems. This application is designed as a technical assignment starter for migrating to .NET WPF, intentionally incorporating technical debt, tight coupling, and anti-patterns.
+A legacy-style Java desktop application for managing customer orders. This application demonstrates a typical older enterprise system and serves as a technical assignment starter for practicing migration to modern platforms like .NET WPF.
 
-## Overview
+## What Does This Application Do?
 
-This is a desktop "Order Entry" application for a small business with **intentionally poor design**:
-- Customer management
-- Product catalog  
-- Order creation and editing with line items
-- Pricing calculations with tiered discounts
-- Tax calculation
-- Order validation
-- JSON-based persistence
+This is a **desktop Order Entry System** for a small business. It allows users to:
 
-**IMPORTANT**: This codebase intentionally violates best practices to simulate realistic legacy code!
+- **Manage Customers**: Add, edit, delete, and search for customer records
+- **Browse Products**: View the product catalog with prices
+- **Create Orders**: Build orders by selecting customers and adding product line items
+- **Calculate Pricing**: Automatically calculate order totals with:
+  - Tiered discounts based on order subtotal (5%, 10%, or 15%)
+  - Tax calculation (14.975%)
+  - Automatic rounding to 2 decimal places
+- **Validate Orders**: Ensure orders meet business rules before saving
+- **Persist Data**: Save and load all data from JSON files
 
-## Prerequisites
+The application includes sample data (5 customers, 10 products, 2 orders) so you can start using it immediately without any setup.
 
-- **JDK 11 or higher** (recommended)
-- Code is compatible with **Java 8** language level
-- Maven Wrapper is included - no Maven installation required
+## Getting Started
 
-## Quick Start
+### Prerequisites
 
-### 1. Run the Desktop Application
+You need **Java 11 or higher** installed on your system. The code is compatible with Java 8 language level, but Java 11+ is recommended for running it.
 
-**Note**: There are **NO unit tests** in this codebase - another example of technical debt!
+### Quick Setup
 
+We provide setup scripts that will check for Java and help you install it if needed:
+
+**On Linux/Mac:**
+```bash
+chmod +x setup.sh
+./setup.sh
+```
+
+**On Windows:**
+```cmd
+setup.bat
+```
+
+These scripts will:
+1. Check if Java is installed
+2. Guide you through installation if needed (or install it automatically on Linux)
+3. Verify your setup is ready
+
+### Manual Java Installation
+
+If you prefer to install Java manually:
+
+1. Download OpenJDK 11+ from: https://adoptium.net/
+2. Install it following the instructions for your operating system
+3. Verify installation: `java -version`
+
+## Running the Application
+
+### 1. Launch the Desktop Application
+
+**On Linux/Mac:**
 ```bash
 ./mvnw -q exec:java
 ```
 
-This launches the Swing UI application. You can:
-- Browse and search customers
-- Create and edit orders
-- Add/edit/remove order lines
-- See pricing calculations in real-time
-- Save and reload data from JSON files
+**On Windows:**
+```cmd
+mvnw.cmd -q exec:java
+```
 
-### 2. Run the Scenario Runner
+This starts the Swing-based desktop application. You'll see a window with menu navigation where you can:
 
-The scenario runner executes pricing and validation scenarios from JSON files and outputs canonical results (useful for parity testing after migration):
+1. **Browse Customers**: View the customer list, search by name, add/edit/delete customers
+2. **Manage Orders**: Create new orders, edit existing ones, view order history
+3. **Edit Order Details**: 
+   - Select a customer
+   - Add product line items (product, quantity, price)
+   - See live calculation of subtotal, discount, tax, and total
+   - Save the order
+
+### 2. Compile the Code
+
+If you want to compile without running:
+
+```bash
+./mvnw compile
+```
+
+### 3. Run the Scenario Runner (for Testing)
+
+The application includes a scenario runner that processes test cases from JSON files. This is useful for validating pricing calculations:
 
 ```bash
 ./mvnw -q exec:java@scenario-runner -Dexec.args="scenarios/pricing_scenarios.json"
 ```
 
-Or for validation scenarios:
+Or test validation scenarios:
 
 ```bash
 ./mvnw -q exec:java@scenario-runner -Dexec.args="scenarios/validation_scenarios.json"
 ```
 
-## Project Structure
+## How the Application Works
+
+### Data Storage
+
+All data is stored in JSON files under the `data/` directory:
+- `customers.json` - Customer information (ID, name, email, phone, address)
+- `products.json` - Product catalog (ID, name, unit price)
+- `orders.json` - Order records (customer, line items, totals, dates)
+
+The application loads this data on startup and saves changes automatically when you add/edit/delete records.
+
+### Project Structure
 
 ```
 src/main/java/aim/legacy/
-├── domain/          # POJOs: Customer, Product, Order, OrderLine
-├── ui/              # Swing screens with BUSINESS LOGIC embedded (bad!)
-└── scenarios/       # Scenario runner (also messy)
+├── domain/          # Data classes: Customer, Product, Order, OrderLine
+├── ui/              # Swing screens: MainApp, CustomersScreen, OrdersScreen, OrderEditorDialog
+└── scenarios/       # ScenarioRunner for testing
 
-data/                # JSON data files (customers, products, orders)
-scenarios/           # Scenario JSON files for testing
+data/                # JSON data files
+scenarios/           # Test scenario files
 ```
-
-**Note**: There is NO service layer, NO data access layer, NO tests - everything is in the UI!
 
 ## Business Rules
 
+The application implements these business rules for order pricing:
+
 ### Pricing Calculation
-- **Subtotal**: Sum of all line totals (quantity × unit price)
-- **Discount Tiers** (based on subtotal):
+
+1. **Subtotal**: Sum of all line totals (quantity × unit price)
+2. **Discount Tiers** (based on subtotal):
   - ≥ $500: 5% discount
   - ≥ $1,000: 10% discount
   - ≥ $2,000: 15% discount
-- **Tax**: 14.975% (applied after discount)
-- **Rounding**: All monetary values rounded to 2 decimals using HALF_UP
+3. **Tax**: 14.975% (applied after discount)
+4. **Rounding**: All monetary values rounded to 2 decimals using HALF_UP
 
 ### Validation Rules
+
+Before an order can be saved, it must pass these validations:
 - Customer is required
 - Order must have at least 1 line item
 - Quantity must be a positive integer
 - Unit price must be ≥ 0
 - Discount cannot exceed 15%
 
-## Data Persistence
+## Sample Data
 
-The application uses JSON files with **NO data access layer**:
-- File I/O code is directly in the UI classes (MainApp)
-- Global static lists for data (terrible practice!)
-- No abstraction, no repository pattern
-- `customers.json`, `products.json`, `orders.json` under `data/` directory
+The application comes with pre-loaded sample data:
 
-Sample data is pre-loaded so the application runs immediately.
+- **5 Customers**: John Doe, Jane Smith, Bob Johnson, Alice Williams, Charlie Brown
+- **10 Products**: Including Laptop ($1299.99), Smartphone ($899.99), Tablet ($599.99), Monitor ($349.99), Keyboard ($149.99), Mouse ($29.99), and more
+- **2 Sample Orders**: Demonstrating typical order structures
 
-## Testing
+You can modify, delete, or add to this data through the application UI.
 
-**There are NO tests!** This is intentional technical debt to make migration more challenging.
+## Technical Notes
 
-## Scenario Runner for Parity Testing
+### Why Does This Code Look Old?
 
-The scenario runner has **duplicated business logic** - the same calculations are copy-pasted in multiple places! This is intentional technical debt.
+This is a **legacy application** designed to simulate older enterprise systems. It uses patterns and practices common in applications built before modern frameworks:
 
-Example scenario file structure:
-```json
-[
-  {
-    "scenarioName": "five_percent_discount",
-    "customerId": 1,
-    "lines": [
-      {
-        "productId": 1,
-        "quantity": 1,
-        "unitPrice": 500.00
-      }
-    ]
-  }
-]
-```
+- Direct file I/O instead of database
+- Swing UI (older Java desktop framework)
+- Simple architecture without complex abstractions
+- Global state management
+- Manual ID generation
 
-## Technical Debt in This Codebase
+This makes it an ideal candidate for migration exercises to modern platforms like .NET WPF.
 
-This application is **intentionally poorly designed**. See [ARCHITECTURE_NOTES.md](ARCHITECTURE_NOTES.md) for details on:
-- All the anti-patterns and bad practices used
-- Why this code is terrible
-- What needs to be refactored during migration
-- How to extract proper architecture
+### Maven Wrapper
+
+The project includes Maven Wrapper (`mvnw` / `mvnw.cmd`), so you don't need to install Maven separately. The wrapper automatically downloads the correct Maven version and runs it.
 
 ## Building
 
-To compile:
+To compile the code:
 
 ```bash
 ./mvnw compile
 ```
 
-To create a JAR:
+To create a JAR file:
 
 ```bash
 ./mvnw package
 ```
 
-## Why is this code so bad?
+The JAR will be created in the `target/` directory.
 
-This is **intentional**! The codebase demonstrates common problems in legacy enterprise applications:
-- ❌ No separation of concerns
-- ❌ Business logic in UI code
-- ❌ No data access layer
-- ❌ No tests
-- ❌ Global static state
-- ❌ Copy-pasted code
-- ❌ Hard-coded values
-- ❌ Poor error handling
+## Troubleshooting
 
-This makes the migration to .NET WPF more realistic and challenging!
+**Problem**: "Java not found" error
+- **Solution**: Run the setup script (`setup.sh` or `setup.bat`) or install Java manually from https://adoptium.net/
 
-## License
+**Problem**: Application window doesn't appear
+- **Solution**: Make sure you're running the command from the project root directory and that Java 11+ is installed
 
-This is a sample application for educational and technical assessment purposes.
+**Problem**: Data changes aren't persisted
+- **Solution**: Check that the `data/` directory exists and is writable
+
+## Next Steps
+
+After getting familiar with the application, you can:
+
+1. Explore the codebase to understand how it works
+2. Use the scenario runner to understand pricing calculations
+3. Review ARCHITECTURE_NOTES.md for insights on the code structure
+4. Consider how you would migrate this to a modern platform
+
+## About This Project
+
+This application is designed for educational purposes and technical assessments, particularly for practicing code migration from Java to .NET platforms.

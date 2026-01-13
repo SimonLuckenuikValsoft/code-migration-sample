@@ -99,7 +99,6 @@ public class CustomerDialog extends JDialog {
     }
     
     private void save() {
-        // TECHNICAL DEBT: Minimal validation
         if (nameField.getText().trim().isEmpty()) {
             JOptionPane.showMessageDialog(this, "Name is required");
             return;

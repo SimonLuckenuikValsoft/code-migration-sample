@@ -9,7 +9,6 @@ import java.util.List;
 
 /**
  * CustomersScreen - screen for managing customers.
- * TECHNICAL DEBT: Direct access to global state, no abstraction
  */
 public class CustomersScreen extends JPanel {
 
@@ -75,7 +74,6 @@ public class CustomersScreen extends JPanel {
         loadCustomers();
     }
     
-    // TECHNICAL DEBT: Direct access to static list
     private void loadCustomers() {
         tableModel.setRowCount(0);
         for (Customer customer : MainApp.allCustomers) {
@@ -89,7 +87,6 @@ public class CustomersScreen extends JPanel {
         }
     }
     
-    // TECHNICAL DEBT: Business logic in UI - manual search implementation
     private void searchCustomers() {
         String query = searchField.getText().trim();
         if (query.isEmpty()) {
@@ -118,7 +115,6 @@ public class CustomersScreen extends JPanel {
         
         Customer customer = dialog.getCustomer();
         if (customer != null) {
-            // TECHNICAL DEBT: Direct manipulation of global state
             customer.setId(MainApp.getNextCustomerId());
             MainApp.allCustomers.add(customer);
             MainApp.saveCustomers();
@@ -135,7 +131,6 @@ public class CustomersScreen extends JPanel {
         
         Long id = (Long) tableModel.getValueAt(selectedRow, 0);
         
-        // TECHNICAL DEBT: Linear search through list
         Customer customer = null;
         for (Customer c : MainApp.allCustomers) {
             if (c.getId().equals(id)) {
@@ -151,7 +146,6 @@ public class CustomersScreen extends JPanel {
         
         Customer updatedCustomer = dialog.getCustomer();
         if (updatedCustomer != null) {
-            // TECHNICAL DEBT: Replace in place
             for (int i = 0; i < MainApp.allCustomers.size(); i++) {
                 if (MainApp.allCustomers.get(i).getId().equals(id)) {
                     MainApp.allCustomers.set(i, updatedCustomer);
@@ -178,7 +172,6 @@ public class CustomersScreen extends JPanel {
         if (confirm == JOptionPane.YES_OPTION) {
             Long id = (Long) tableModel.getValueAt(selectedRow, 0);
             
-            // TECHNICAL DEBT: Remove from global list directly
             MainApp.allCustomers.removeIf(c -> c.getId().equals(id));
             MainApp.saveCustomers();
             loadCustomers();
