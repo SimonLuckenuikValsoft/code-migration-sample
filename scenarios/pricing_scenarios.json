@@ -1,0 +1,100 @@
+[
+  {
+    "scenarioName": "no_discount",
+    "customerId": 1,
+    "lines": [
+      {
+        "productId": 1,
+        "quantity": 1,
+        "unitPrice": 100.00
+      }
+    ]
+  },
+  {
+    "scenarioName": "five_percent_discount_at_threshold",
+    "customerId": 1,
+    "lines": [
+      {
+        "productId": 1,
+        "quantity": 1,
+        "unitPrice": 500.00
+      }
+    ]
+  },
+  {
+    "scenarioName": "ten_percent_discount_at_threshold",
+    "customerId": 1,
+    "lines": [
+      {
+        "productId": 1,
+        "quantity": 1,
+        "unitPrice": 1000.00
+      }
+    ]
+  },
+  {
+    "scenarioName": "fifteen_percent_discount_at_threshold",
+    "customerId": 1,
+    "lines": [
+      {
+        "productId": 1,
+        "quantity": 1,
+        "unitPrice": 2000.00
+      }
+    ]
+  },
+  {
+    "scenarioName": "complex_order_multiple_lines",
+    "customerId": 1,
+    "lines": [
+      {
+        "productId": 1,
+        "quantity": 2,
+        "unitPrice": 1299.99
+      },
+      {
+        "productId": 2,
+        "quantity": 2,
+        "unitPrice": 29.99
+      },
+      {
+        "productId": 3,
+        "quantity": 1,
+        "unitPrice": 149.99
+      }
+    ]
+  },
+  {
+    "scenarioName": "rounding_test_half_cent",
+    "customerId": 1,
+    "lines": [
+      {
+        "productId": 1,
+        "quantity": 1,
+        "unitPrice": 66.67
+      }
+    ]
+  },
+  {
+    "scenarioName": "just_below_first_threshold",
+    "customerId": 1,
+    "lines": [
+      {
+        "productId": 1,
+        "quantity": 1,
+        "unitPrice": 499.99
+      }
+    ]
+  },
+  {
+    "scenarioName": "just_below_second_threshold",
+    "customerId": 1,
+    "lines": [
+      {
+        "productId": 1,
+        "quantity": 1,
+        "unitPrice": 999.99
+      }
+    ]
+  }
+]

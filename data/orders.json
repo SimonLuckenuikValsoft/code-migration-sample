@@ -1,0 +1,47 @@
+[
+  {
+    "id": 1,
+    "customerId": 1,
+    "customerName": "Acme Corporation",
+    "orderDate": "2026-01-01T10:00:00",
+    "lines": [
+      {
+        "id": 1,
+        "productId": 1,
+        "productName": "Laptop Pro 15",
+        "quantity": 2,
+        "unitPrice": 1299.99
+      },
+      {
+        "id": 2,
+        "productId": 2,
+        "productName": "Wireless Mouse",
+        "quantity": 2,
+        "unitPrice": 29.99
+      }
+    ],
+    "subtotal": 2659.96,
+    "discount": 265.00,
+    "tax": 358.64,
+    "total": 2753.60
+  },
+  {
+    "id": 2,
+    "customerId": 2,
+    "customerName": "TechStart Inc",
+    "orderDate": "2026-01-02T14:30:00",
+    "lines": [
+      {
+        "id": 1,
+        "productId": 4,
+        "productName": "27\" Monitor",
+        "quantity": 1,
+        "unitPrice": 399.99
+      }
+    ],
+    "subtotal": 399.99,
+    "discount": 0.00,
+    "tax": 59.90,
+    "total": 459.89
+  }
+]
