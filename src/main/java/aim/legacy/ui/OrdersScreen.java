@@ -1,23 +1,18 @@
 package aim.legacy.ui;
 
-import aim.legacy.domain.Order;
+import aim.legacy.db.DB;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.time.format.DateTimeFormatter;
+import java.sql.*;
 
-/**
- * OrdersScreen - screen for managing orders.
- */
 public class OrdersScreen extends JPanel {
 
     private final MainApp mainApp;
     
     private JTable orderTable;
     private DefaultTableModel tableModel;
-    
-    private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
     
     public OrdersScreen(MainApp mainApp) {
         this.mainApp = mainApp;
@@ -28,15 +23,12 @@ public class OrdersScreen extends JPanel {
     private void setupUI() {
         setLayout(new BorderLayout());
         
-        // Top panel - title
         JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         topPanel.add(new JLabel("Orders"));
         add(topPanel, BorderLayout.NORTH);
         
-        // Center - table
         String[] columns = {"ID", "Customer", "Date", "Subtotal", "Discount", "Tax", "Total"};
         tableModel = new DefaultTableModel(columns, 0) {
-            @Override
             public boolean isCellEditable(int row, int column) {
                 return false;
             }
@@ -45,7 +37,6 @@ public class OrdersScreen extends JPanel {
         JScrollPane scrollPane = new JScrollPane(orderTable);
         add(scrollPane, BorderLayout.CENTER);
         
-        // Bottom panel - buttons
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         JButton newButton = new JButton("New Order");
         newButton.addActionListener(e -> createOrder());
@@ -68,23 +59,34 @@ public class OrdersScreen extends JPanel {
     
     private void loadOrders() {
         tableModel.setRowCount(0);
-        for (Order order : MainApp.allOrders) {
-            tableModel.addRow(new Object[]{
-                order.getId(),
-                order.getCustomerName(),
-                order.getOrderDate() != null ? order.getOrderDate().format(DATE_FORMAT) : "",
-                "$" + order.getSubtotal(),
-                "$" + order.getDiscount(),
-                "$" + order.getTax(),
-                "$" + order.getTotal()
-            });
+        try {
+            Connection conn = DB.getConn();
+            Statement stmt = conn.createStatement();
+            String sql = "SELECT order_id, cust_name, order_date, subtotal, discount, tax, total FROM orders ORDER BY order_id";
+            ResultSet rs = stmt.executeQuery(sql);
+            
+            while (rs.next()) {
+                tableModel.addRow(new Object[]{
+                    rs.getLong("order_id"),
+                    rs.getString("cust_name"),
+                    rs.getString("order_date"),
+                    "$" + String.format("%.2f", rs.getDouble("subtotal")),
+                    "$" + String.format("%.2f", rs.getDouble("discount")),
+                    "$" + String.format("%.2f", rs.getDouble("tax")),
+                    "$" + String.format("%.2f", rs.getDouble("total"))
+                });
+            }
+            
+            rs.close();
+            stmt.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error loading orders: " + e.getMessage());
         }
     }
     
     private void createOrder() {
-        OrderEditorDialog dialog = new OrderEditorDialog(
-            (Frame) SwingUtilities.getWindowAncestor(this), 
-            null);
+        OrderEditorDialog dialog = new OrderEditorDialog((Frame) SwingUtilities.getWindowAncestor(this), 0);
         dialog.setVisible(true);
         
         if (dialog.isSaved()) {
@@ -99,21 +101,9 @@ public class OrdersScreen extends JPanel {
             return;
         }
         
-        Long id = (Long) tableModel.getValueAt(selectedRow, 0);
+        long id = (Long) tableModel.getValueAt(selectedRow, 0);
         
-        Order order = null;
-        for (Order o : MainApp.allOrders) {
-            if (o.getId().equals(id)) {
-                order = o;
-                break;
-            }
-        }
-        
-        if (order == null) return;
-        
-        OrderEditorDialog dialog = new OrderEditorDialog(
-            (Frame) SwingUtilities.getWindowAncestor(this), 
-            order);
+        OrderEditorDialog dialog = new OrderEditorDialog((Frame) SwingUtilities.getWindowAncestor(this), id);
         dialog.setVisible(true);
         
         if (dialog.isSaved()) {
@@ -134,11 +124,22 @@ public class OrdersScreen extends JPanel {
             JOptionPane.YES_NO_OPTION);
         
         if (confirm == JOptionPane.YES_OPTION) {
-            Long id = (Long) tableModel.getValueAt(selectedRow, 0);
+            long id = (Long) tableModel.getValueAt(selectedRow, 0);
             
-            MainApp.allOrders.removeIf(o -> o.getId().equals(id));
-            MainApp.saveOrders();
-            loadOrders();
+            try {
+                Connection conn = DB.getConn();
+                Statement stmt = conn.createStatement();
+                String sql = "DELETE FROM order_line WHERE order_id = " + id;
+                stmt.execute(sql);
+                sql = "DELETE FROM orders WHERE order_id = " + id;
+                stmt.execute(sql);
+                
+                stmt.close();
+                loadOrders();
+            } catch (SQLException e) {
+                e.printStackTrace();
+                JOptionPane.showMessageDialog(this, "Error deleting order: " + e.getMessage());
+            }
         }
     }
 }

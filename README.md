@@ -1,213 +1,223 @@
-# Legacy Order Entry Application
+# Order Entry Application - Migration Assignment
 
-A legacy-style Java desktop application for managing customer orders. This application demonstrates a typical older enterprise system and serves as a technical assignment starter for practicing migration to modern platforms like .NET WPF.
+## Overview
 
-## What Does This Application Do?
+This is a legacy Java desktop application for order entry. **Your task is to migrate this codebase to C# WPF** using AI assistance (LLMs like ChatGPT, Claude, or GitHub Copilot).
 
-This is a **desktop Order Entry System** for a small business. It allows users to:
+### What This Application Does
 
-- **Manage Customers**: Add, edit, delete, and search for customer records
-- **Browse Products**: View the product catalog with prices
-- **Create Orders**: Build orders by selecting customers and adding product line items
-- **Calculate Pricing**: Automatically calculate order totals with:
-  - Tiered discounts based on order subtotal (5%, 10%, or 15%)
-  - Tax calculation (14.975%)
-  - Automatic rounding to 2 decimal places
-- **Validate Orders**: Ensure orders meet business rules before saving
-- **Persist Data**: Save and load all data from JSON files
+**Order Entry System** for managing customer orders:
+- **Customer Management**: Add, edit, delete, search customers
+- **Product Catalog**: View available products with prices  
+- **Order Processing**: Create orders, add line items, calculate pricing
+- **Pricing Engine**: Tiered discounts (5%/10%/15%), tax calculation (14.975%)
+- **Data Persistence**: SQLite database for all data storage
 
-The application includes sample data (5 customers, 10 products, 2 orders) so you can start using it immediately without any setup.
+## Quick Start (< 2 minutes)
 
-## Getting Started
+**No Java knowledge required!** Just run one script:
 
-### Prerequisites
-
-You need **Java 11 or higher** installed on your system. The code is compatible with Java 8 language level, but Java 11+ is recommended for running it.
-
-### Quick Setup
-
-We provide setup scripts that will check for Java and help you install it if needed:
-
-**On Linux/Mac:**
+### Linux/Mac:
 ```bash
-chmod +x setup.sh
-./setup.sh
+./run.sh
 ```
 
-**On Windows:**
+### Windows:
 ```cmd
-setup.bat
+run.bat
 ```
 
-These scripts will:
-1. Check if Java is installed
-2. Guide you through installation if needed (or install it automatically on Linux)
-3. Verify your setup is ready
+The script will:
+1. Install Java 11 if not present (Linux/Mac only - Windows requires manual install)
+2. Download all dependencies automatically (including SQLite JDBC driver)
+3. Initialize the SQLite database with sample data
+4. Launch the desktop application
 
-### Manual Java Installation
+**That's it!** You should see the Order Entry application window.
 
-If you prefer to install Java manually:
+## Exploring the Application
 
-1. Download OpenJDK 11+ from: https://adoptium.net/
-2. Install it following the instructions for your operating system
-3. Verify installation: `java -version`
+Before migrating, familiarize yourself with the functionality:
 
-## Running the Application
-
-### 1. Launch the Desktop Application
-
-**On Linux/Mac:**
-```bash
-./mvnw -q exec:java
-```
-
-**On Windows:**
-```cmd
-mvnw.cmd -q exec:java
-```
-
-This starts the Swing-based desktop application. You'll see a window with menu navigation where you can:
-
-1. **Browse Customers**: View the customer list, search by name, add/edit/delete customers
-2. **Manage Orders**: Create new orders, edit existing ones, view order history
-3. **Edit Order Details**: 
+1. **Customers Tab**: Browse customer list, add/edit customers
+2. **Orders Tab**: View existing orders, create new orders
+3. **Order Editor**: 
    - Select a customer
-   - Add product line items (product, quantity, price)
-   - See live calculation of subtotal, discount, tax, and total
+   - Add product line items
+   - See live pricing calculations (subtotal, discount, tax, total)
    - Save the order
 
-### 2. Compile the Code
-
-If you want to compile without running:
-
-```bash
-./mvnw compile
-```
-
-### 3. Run the Scenario Runner (for Testing)
-
-The application includes a scenario runner that processes test cases from JSON files. This is useful for validating pricing calculations:
-
-```bash
-./mvnw -q exec:java@scenario-runner -Dexec.args="scenarios/pricing_scenarios.json"
-```
-
-Or test validation scenarios:
-
-```bash
-./mvnw -q exec:java@scenario-runner -Dexec.args="scenarios/validation_scenarios.json"
-```
-
-## How the Application Works
-
-### Data Storage
-
-All data is stored in JSON files under the `data/` directory:
-- `customers.json` - Customer information (ID, name, email, phone, address)
-- `products.json` - Product catalog (ID, name, unit price)
-- `orders.json` - Order records (customer, line items, totals, dates)
-
-The application loads this data on startup and saves changes automatically when you add/edit/delete records.
+## Understanding the Codebase
 
 ### Project Structure
 
 ```
 src/main/java/aim/legacy/
-├── domain/          # Data classes: Customer, Product, Order, OrderLine
-├── ui/              # Swing screens: MainApp, CustomersScreen, OrdersScreen, OrderEditorDialog
-└── scenarios/       # ScenarioRunner for testing
+├── db/              # Database access (SQLite)
+├── domain/          # Data models (Customer, Product, Order, OrderLine)
+├── ui/              # Swing UI screens
+└── scenarios/       # Test scenario runner
 
-data/                # JSON data files
-scenarios/           # Test scenario files
+orderentry.db        # SQLite database (created on first run)
+scenarios/           # JSON test scenarios for validation
 ```
 
-## Business Rules
+### Code Characteristics (Important for Migration)
 
-The application implements these business rules for order pricing:
+This codebase uses **procedural, database-centric patterns** similar to Progress ABL:
 
-### Pricing Calculation
+1. **Direct SQL in UI Code**: No ORM, no repositories - SQL queries are embedded directly in event handlers
+2. **String-Based SQL**: Queries built using string concatenation (SQL injection risk!)
+3. **Procedural Flow**: FOR EACH-style loops, manual ResultSet iteration
+4. **Temp Tables Pattern**: In-memory collections (`ArrayList<TempLine>`) simulate temporary tables
+5. **Mixed Concerns**: Business logic, validation, and database access all in UI code
+6. **No Comments**: Code has no explanatory comments (intentional)
 
-1. **Subtotal**: Sum of all line totals (quantity × unit price)
-2. **Discount Tiers** (based on subtotal):
-  - ≥ $500: 5% discount
-  - ≥ $1,000: 10% discount
-  - ≥ $2,000: 15% discount
-3. **Tax**: 14.975% (applied after discount)
-4. **Rounding**: All monetary values rounded to 2 decimals using HALF_UP
+**Why These Patterns?**
+These patterns are common in legacy Progress ABL applications. The migration challenge is to:
+- Extract business logic from UI code
+- Replace direct SQL with Entity Framework or similar
+- Implement proper separation of concerns (MVVM pattern)
+- Add proper error handling and security
 
-### Validation Rules
+## Migration Task
 
-Before an order can be saved, it must pass these validations:
+### Your Goal
+
+Migrate this Java Swing application to **C# WPF** while:
+
+1. **Maintaining Functional Parity**: All features must work identically
+2. **Improving Architecture**: Extract business logic, use MVVM, proper data access
+3. **Using Modern Patterns**: Entity Framework, dependency injection, proper validation
+4. **Preserving Business Rules**: Exact same pricing calculations and validation
+
+### Validation
+
+Use the scenario runner to verify pricing parity:
+
+```bash
+./mvnw -q exec:java@scenario-runner -Dexec.args="scenarios/pricing_scenarios.json"
+```
+
+This outputs canonical JSON with pricing calculations. Your C# version should produce identical output for the same inputs.
+
+Example output:
+```json
+{
+  "scenarioName": "ten_percent_discount_at_threshold",
+  "result": {
+    "discount": "100.00",
+    "subtotal": "1000.00",
+    "tax": "134.78",
+    "total": "1034.78"
+  },
+  "validationErrors": null
+}
+```
+
+### Business Rules to Preserve
+
+**Pricing Calculation:**
+1. Subtotal = Sum of (quantity × unit price) for all lines
+2. Discount tiers based on subtotal:
+   - ≥ $500: 5%
+   - ≥ $1000: 10%
+   - ≥ $2000: 15%
+3. Tax = 14.975% applied to (subtotal - discount)
+4. Total = subtotal - discount + tax
+5. All monetary values rounded to 2 decimals using HALF_UP
+
+**Validation Rules:**
 - Customer is required
-- Order must have at least 1 line item
-- Quantity must be a positive integer
+- At least 1 line item required
+- Quantity must be positive
 - Unit price must be ≥ 0
 - Discount cannot exceed 15%
 
-## Sample Data
+## Using LLMs for Migration
 
-The application comes with pre-loaded sample data:
+### Recommended Approach
 
-- **5 Customers**: John Doe, Jane Smith, Bob Johnson, Alice Williams, Charlie Brown
-- **10 Products**: Including Laptop ($1299.99), Smartphone ($899.99), Tablet ($599.99), Monitor ($349.99), Keyboard ($149.99), Mouse ($29.99), and more
-- **2 Sample Orders**: Demonstrating typical order structures
+1. **Understand First**: Run the Java app, explore the code
+2. **Extract Business Logic**: Ask LLM to identify and extract pricing/validation logic
+3. **Design C# Architecture**: Get LLM to design proper MVVM structure
+4. **Migrate Incrementally**: One screen at a time
+5. **Validate Continuously**: Run scenario tests after each component
 
-You can modify, delete, or add to this data through the application UI.
+### Effective LLM Prompts
 
-## Technical Notes
+**Example prompts to try:**
 
-### Why Does This Code Look Old?
+```
+"Analyze this Java OrderEditorDialog class and extract the pricing calculation 
+logic into a separate C# service class. The business rules are: [paste rules]"
+```
 
-This is a **legacy application** designed to simulate older enterprise systems. It uses patterns and practices common in applications built before modern frameworks:
+```
+"This Java code uses direct SQL queries. Convert it to C# using Entity Framework 
+Core with SQLite, maintaining the same database schema."
+```
 
-- Direct file I/O instead of database
-- Swing UI (older Java desktop framework)
-- Simple architecture without complex abstractions
-- Global state management
-- Manual ID generation
+```
+"Create a C# WPF MVVM implementation of this Java Swing CustomersScreen, 
+separating UI, view model, and data access properly."
+```
 
-This makes it an ideal candidate for migration exercises to modern platforms like .NET WPF.
+### What Makes This Challenging for LLMs
 
-### Maven Wrapper
+- **Mixed concerns**: Business logic embedded in UI makes extraction difficult
+- **String-based SQL**: LLMs must recognize SQL injection risks and modernize
+- **Procedural patterns**: Translating FOR EACH-style loops to LINQ
+- **Implicit dependencies**: No dependency injection makes dependencies hard to track
+- **No separation**: Must infer proper architectural boundaries
 
-The project includes Maven Wrapper (`mvnw` / `mvnw.cmd`), so you don't need to install Maven separately. The wrapper automatically downloads the correct Maven version and runs it.
+## Database Schema
 
-## Building
+The SQLite database has 4 tables:
 
-To compile the code:
+```sql
+customer (cust_id, cust_name, email, phone, address)
+product (prod_id, prod_name, unit_price)
+orders (order_id, cust_id, cust_name, order_date, subtotal, discount, tax, total)
+order_line (line_id, order_id, prod_id, prod_name, quantity, unit_price)
+```
 
+The database file `orderentry.db` is created automatically on first run with sample data:
+- 5 customers
+- 10 products  
+- 2 sample orders
+
+## Additional Commands
+
+**Compile only:**
 ```bash
 ./mvnw compile
 ```
 
-To create a JAR file:
-
+**Run scenario tests:**
 ```bash
-./mvnw package
+./mvnw -q exec:java@scenario-runner -Dexec.args="scenarios/pricing_scenarios.json"
+./mvnw -q exec:java@scenario-runner -Dexec.args="scenarios/validation_scenarios.json"
 ```
 
-The JAR will be created in the `target/` directory.
+## Success Criteria
 
-## Troubleshooting
+Your C# migration is successful when:
 
-**Problem**: "Java not found" error
-- **Solution**: Run the setup script (`setup.sh` or `setup.bat`) or install Java manually from https://adoptium.net/
+1. ✅ All UI screens function identically to Java version
+2. ✅ Scenario runner outputs match exactly (pricing parity)
+3. ✅ Code uses proper MVVM architecture
+4. ✅ Data access uses Entity Framework (not raw SQL)
+5. ✅ Business logic is separated from UI
+6. ✅ Validation is centralized and reusable
+7. ✅ No SQL injection vulnerabilities
 
-**Problem**: Application window doesn't appear
-- **Solution**: Make sure you're running the command from the project root directory and that Java 11+ is installed
+## Tips
 
-**Problem**: Data changes aren't persisted
-- **Solution**: Check that the `data/` directory exists and is writable
+- **Start simple**: Migrate the Customer screen first (simpler than Orders)
+- **Test frequently**: Use the scenario runner to catch calculation errors early
+- **Ask specific questions**: LLMs work better with focused, specific prompts
+- **Review LLM output**: Don't blindly accept generated code - understand it
+- **Iterate**: Refine your prompts based on LLM responses
 
-## Next Steps
-
-After getting familiar with the application, you can:
-
-1. Explore the codebase to understand how it works
-2. Use the scenario runner to understand pricing calculations
-3. Review ARCHITECTURE_NOTES.md for insights on the code structure
-4. Consider how you would migrate this to a modern platform
-
-## About This Project
-
-This application is designed for educational purposes and technical assessments, particularly for practicing code migration from Java to .NET platforms.
+Good luck with your migration!

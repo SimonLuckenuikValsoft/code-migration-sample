@@ -1,7 +1,5 @@
 package aim.legacy.scenarios;
 
-import aim.legacy.domain.Order;
-import aim.legacy.domain.OrderLine;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
@@ -14,9 +12,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-/**
- * ScenarioRunner - runs pricing and validation scenarios from JSON files.
- */
 public class ScenarioRunner {
 
     private static final DecimalFormat MONEY_FORMAT = new DecimalFormat("0.00");
@@ -68,18 +63,14 @@ public class ScenarioRunner {
             ((Number) input.get("customerId")).longValue() : null;
         List<Map<String, Object>> lines = (List<Map<String, Object>>) input.get("lines");
 
-        Order order = new Order();
-        order.setCustomerId(customerId);
-        order.setCustomerName("Test Customer");
-        order.setLines(new ArrayList<>());
-
+        List<ScenarioLine> orderLines = new ArrayList<>();
+        
         if (lines != null) {
             for (Map<String, Object> lineData : lines) {
-                OrderLine line = new OrderLine();
-                line.setProductId(lineData.get("productId") != null ? 
-                    ((Number) lineData.get("productId")).longValue() : null);
-                line.setProductName("Product " + line.getProductId());
-                line.setQuantity(((Number) lineData.get("quantity")).intValue());
+                ScenarioLine line = new ScenarioLine();
+                line.productId = lineData.get("productId") != null ? 
+                    ((Number) lineData.get("productId")).longValue() : null;
+                line.quantity = ((Number) lineData.get("quantity")).intValue();
                 
                 Object priceObj = lineData.get("unitPrice");
                 BigDecimal unitPrice;
@@ -90,15 +81,15 @@ public class ScenarioRunner {
                 } else {
                     unitPrice = new BigDecimal(priceObj.toString());
                 }
-                line.setUnitPrice(unitPrice);
+                line.unitPrice = unitPrice;
                 
-                order.getLines().add(line);
+                orderLines.add(line);
             }
         }
 
         BigDecimal subtotal = BigDecimal.ZERO;
-        for (OrderLine line : order.getLines()) {
-            BigDecimal lineTotal = line.getUnitPrice().multiply(BigDecimal.valueOf(line.getQuantity()));
+        for (ScenarioLine line : orderLines) {
+            BigDecimal lineTotal = line.unitPrice.multiply(BigDecimal.valueOf(line.quantity));
             subtotal = subtotal.add(lineTotal);
         }
         subtotal = subtotal.setScale(2, RoundingMode.HALF_UP);
@@ -117,14 +108,8 @@ public class ScenarioRunner {
         BigDecimal tax = taxableAmount.multiply(TAX_RATE);
         tax = tax.setScale(2, RoundingMode.HALF_UP);
         
-        // Calculate total
         BigDecimal total = subtotal.subtract(discount).add(tax);
         total = total.setScale(2, RoundingMode.HALF_UP);
-        
-        order.setSubtotal(subtotal);
-        order.setDiscount(discount);
-        order.setTax(tax);
-        order.setTotal(total);
 
         List<String> errors = new ArrayList<>();
         
@@ -132,35 +117,35 @@ public class ScenarioRunner {
             errors.add("Customer is required");
         }
         
-        if (order.getLines() == null || order.getLines().isEmpty()) {
+        if (orderLines == null || orderLines.isEmpty()) {
             errors.add("Order must have at least one line item");
         } else {
-            for (int i = 0; i < order.getLines().size(); i++) {
-                OrderLine line = order.getLines().get(i);
-                if (line.getQuantity() <= 0) {
+            for (int i = 0; i < orderLines.size(); i++) {
+                ScenarioLine line = orderLines.get(i);
+                if (line.quantity <= 0) {
                     errors.add("Line " + (i + 1) + ": Quantity must be positive");
                 }
-                if (line.getUnitPrice() == null || line.getUnitPrice().compareTo(BigDecimal.ZERO) < 0) {
+                if (line.unitPrice == null || line.unitPrice.compareTo(BigDecimal.ZERO) < 0) {
                     errors.add("Line " + (i + 1) + ": Unit price must be zero or greater");
                 }
-                if (line.getProductId() == null) {
+                if (line.productId == null) {
                     errors.add("Line " + (i + 1) + ": Product is required");
                 }
             }
         }
         
-        if (order.getSubtotal() != null && order.getSubtotal().compareTo(BigDecimal.ZERO) > 0) {
-            BigDecimal discountRate = order.getDiscount().divide(order.getSubtotal(), 4, RoundingMode.HALF_UP);
+        if (subtotal != null && subtotal.compareTo(BigDecimal.ZERO) > 0) {
+            BigDecimal discountRate = discount.divide(subtotal, 4, RoundingMode.HALF_UP);
             if (discountRate.compareTo(new BigDecimal("0.15")) > 0) {
                 errors.add("Discount cannot exceed 15%");
             }
         }
 
         TreeMap<String, Object> result = new TreeMap<>();
-        result.put("discount", formatMoney(order.getDiscount()));
-        result.put("subtotal", formatMoney(order.getSubtotal()));
-        result.put("tax", formatMoney(order.getTax()));
-        result.put("total", formatMoney(order.getTotal()));
+        result.put("discount", formatMoney(discount));
+        result.put("subtotal", formatMoney(subtotal));
+        result.put("tax", formatMoney(tax));
+        result.put("total", formatMoney(total));
 
         Map<String, Object> output = new TreeMap<>();
         output.put("scenarioName", scenarioName);
@@ -177,5 +162,11 @@ public class ScenarioRunner {
     private static String formatMoney(BigDecimal value) {
         if (value == null) return "0.00";
         return MONEY_FORMAT.format(value);
+    }
+    
+    static class ScenarioLine {
+        Long productId;
+        int quantity;
+        BigDecimal unitPrice;
     }
 }

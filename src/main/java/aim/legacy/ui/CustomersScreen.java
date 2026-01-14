@@ -1,15 +1,12 @@
 package aim.legacy.ui;
 
-import aim.legacy.domain.Customer;
+import aim.legacy.db.DB;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.util.List;
+import java.sql.*;
 
-/**
- * CustomersScreen - screen for managing customers.
- */
 public class CustomersScreen extends JPanel {
 
     private final MainApp mainApp;
@@ -27,7 +24,6 @@ public class CustomersScreen extends JPanel {
     private void setupUI() {
         setLayout(new BorderLayout());
         
-        // Top panel - search
         JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         topPanel.add(new JLabel("Search:"));
         searchField = new JTextField(20);
@@ -41,10 +37,8 @@ public class CustomersScreen extends JPanel {
         
         add(topPanel, BorderLayout.NORTH);
         
-        // Center - table
         String[] columns = {"ID", "Name", "Email", "Phone", "Address"};
         tableModel = new DefaultTableModel(columns, 0) {
-            @Override
             public boolean isCellEditable(int row, int column) {
                 return false;
             }
@@ -53,7 +47,6 @@ public class CustomersScreen extends JPanel {
         JScrollPane scrollPane = new JScrollPane(customerTable);
         add(scrollPane, BorderLayout.CENTER);
         
-        // Bottom panel - buttons
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         JButton addButton = new JButton("Add Customer");
         addButton.addActionListener(e -> addCustomer());
@@ -76,14 +69,27 @@ public class CustomersScreen extends JPanel {
     
     private void loadCustomers() {
         tableModel.setRowCount(0);
-        for (Customer customer : MainApp.allCustomers) {
-            tableModel.addRow(new Object[]{
-                customer.getId(),
-                customer.getName(),
-                customer.getEmail(),
-                customer.getPhone(),
-                customer.getAddress()
-            });
+        try {
+            Connection conn = DB.getConn();
+            Statement stmt = conn.createStatement();
+            String sql = "SELECT cust_id, cust_name, email, phone, address FROM customer ORDER BY cust_id";
+            ResultSet rs = stmt.executeQuery(sql);
+            
+            while (rs.next()) {
+                tableModel.addRow(new Object[]{
+                    rs.getLong("cust_id"),
+                    rs.getString("cust_name"),
+                    rs.getString("email"),
+                    rs.getString("phone"),
+                    rs.getString("address")
+                });
+            }
+            
+            rs.close();
+            stmt.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error loading customers: " + e.getMessage());
         }
     }
     
@@ -95,30 +101,59 @@ public class CustomersScreen extends JPanel {
         }
         
         tableModel.setRowCount(0);
-        String lowerQuery = query.toLowerCase();
-        for (Customer customer : MainApp.allCustomers) {
-            if (customer.getName().toLowerCase().contains(lowerQuery)) {
+        try {
+            Connection conn = DB.getConn();
+            Statement stmt = conn.createStatement();
+            String sql = "SELECT cust_id, cust_name, email, phone, address FROM customer " +
+                        "WHERE LOWER(cust_name) LIKE '%" + query.toLowerCase() + "%' ORDER BY cust_id";
+            ResultSet rs = stmt.executeQuery(sql);
+            
+            while (rs.next()) {
                 tableModel.addRow(new Object[]{
-                    customer.getId(),
-                    customer.getName(),
-                    customer.getEmail(),
-                    customer.getPhone(),
-                    customer.getAddress()
+                    rs.getLong("cust_id"),
+                    rs.getString("cust_name"),
+                    rs.getString("email"),
+                    rs.getString("phone"),
+                    rs.getString("address")
                 });
             }
+            
+            rs.close();
+            stmt.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
     
     private void addCustomer() {
-        CustomerDialog dialog = new CustomerDialog((Frame) SwingUtilities.getWindowAncestor(this), null);
+        CustomerDialog dialog = new CustomerDialog((Frame) SwingUtilities.getWindowAncestor(this), 0, "", "", "", "");
         dialog.setVisible(true);
         
-        Customer customer = dialog.getCustomer();
-        if (customer != null) {
-            customer.setId(MainApp.getNextCustomerId());
-            MainApp.allCustomers.add(customer);
-            MainApp.saveCustomers();
-            loadCustomers();
+        if (dialog.isSaved()) {
+            try {
+                Connection conn = DB.getConn();
+                Statement stmt = conn.createStatement();
+                String sql = "SELECT MAX(cust_id) FROM customer";
+                ResultSet rs = stmt.executeQuery(sql);
+                long nextId = 1;
+                if (rs.next()) {
+                    nextId = rs.getLong(1) + 1;
+                }
+                
+                String insertSql = "INSERT INTO customer (cust_id, cust_name, email, phone, address) VALUES (" +
+                    nextId + ", '" + dialog.getName().replace("'", "''") + "', '" +
+                    dialog.getEmail().replace("'", "''") + "', '" +
+                    dialog.getPhone().replace("'", "''") + "', '" +
+                    dialog.getAddress().replace("'", "''") + "')";
+                stmt.execute(insertSql);
+                
+                rs.close();
+                stmt.close();
+                loadCustomers();
+            } catch (SQLException e) {
+                e.printStackTrace();
+                JOptionPane.showMessageDialog(this, "Error adding customer: " + e.getMessage());
+            }
         }
     }
     
@@ -129,31 +164,32 @@ public class CustomersScreen extends JPanel {
             return;
         }
         
-        Long id = (Long) tableModel.getValueAt(selectedRow, 0);
+        long id = (Long) tableModel.getValueAt(selectedRow, 0);
+        String name = (String) tableModel.getValueAt(selectedRow, 1);
+        String email = (String) tableModel.getValueAt(selectedRow, 2);
+        String phone = (String) tableModel.getValueAt(selectedRow, 3);
+        String address = (String) tableModel.getValueAt(selectedRow, 4);
         
-        Customer customer = null;
-        for (Customer c : MainApp.allCustomers) {
-            if (c.getId().equals(id)) {
-                customer = c;
-                break;
-            }
-        }
-        
-        if (customer == null) return;
-        
-        CustomerDialog dialog = new CustomerDialog((Frame) SwingUtilities.getWindowAncestor(this), customer);
+        CustomerDialog dialog = new CustomerDialog((Frame) SwingUtilities.getWindowAncestor(this), id, name, email, phone, address);
         dialog.setVisible(true);
         
-        Customer updatedCustomer = dialog.getCustomer();
-        if (updatedCustomer != null) {
-            for (int i = 0; i < MainApp.allCustomers.size(); i++) {
-                if (MainApp.allCustomers.get(i).getId().equals(id)) {
-                    MainApp.allCustomers.set(i, updatedCustomer);
-                    break;
-                }
+        if (dialog.isSaved()) {
+            try {
+                Connection conn = DB.getConn();
+                Statement stmt = conn.createStatement();
+                String sql = "UPDATE customer SET cust_name = '" + dialog.getName().replace("'", "''") + "', " +
+                    "email = '" + dialog.getEmail().replace("'", "''") + "', " +
+                    "phone = '" + dialog.getPhone().replace("'", "''") + "', " +
+                    "address = '" + dialog.getAddress().replace("'", "''") + "' " +
+                    "WHERE cust_id = " + id;
+                stmt.execute(sql);
+                
+                stmt.close();
+                loadCustomers();
+            } catch (SQLException e) {
+                e.printStackTrace();
+                JOptionPane.showMessageDialog(this, "Error updating customer: " + e.getMessage());
             }
-            MainApp.saveCustomers();
-            loadCustomers();
         }
     }
     
@@ -170,11 +206,20 @@ public class CustomersScreen extends JPanel {
             JOptionPane.YES_NO_OPTION);
         
         if (confirm == JOptionPane.YES_OPTION) {
-            Long id = (Long) tableModel.getValueAt(selectedRow, 0);
+            long id = (Long) tableModel.getValueAt(selectedRow, 0);
             
-            MainApp.allCustomers.removeIf(c -> c.getId().equals(id));
-            MainApp.saveCustomers();
-            loadCustomers();
+            try {
+                Connection conn = DB.getConn();
+                Statement stmt = conn.createStatement();
+                String sql = "DELETE FROM customer WHERE cust_id = " + id;
+                stmt.execute(sql);
+                
+                stmt.close();
+                loadCustomers();
+            } catch (SQLException e) {
+                e.printStackTrace();
+                JOptionPane.showMessageDialog(this, "Error deleting customer: " + e.getMessage());
+            }
         }
     }
 }
