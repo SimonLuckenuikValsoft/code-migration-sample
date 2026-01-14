@@ -422,10 +422,17 @@ public class OrderEditorDialog extends JDialog {
                     subtotal + ", " + discount + ", " + tax + ", " + total + ")";
                 stmt.execute(insertSql);
                 
+                // Get max line_id to ensure globally unique line IDs
+                rs = stmt.executeQuery("SELECT MAX(line_id) FROM order_line");
+                long nextLineId = 1;
+                if (rs.next()) {
+                    nextLineId = rs.getLong(1) + 1;
+                }
+                
                 for (int i = 0; i < tempLines.size(); i++) {
                     TempLine line = tempLines.get(i);
                     String lineSql = "INSERT INTO order_line (line_id, order_id, prod_id, prod_name, quantity, unit_price) VALUES (" +
-                        (i + 1) + ", " + orderId + ", " + line.prodId + ", '" + line.prodName.replace("'", "''") + "', " +
+                        (nextLineId + i) + ", " + orderId + ", " + line.prodId + ", '" + line.prodName.replace("'", "''") + "', " +
                         line.qty + ", " + line.price + ")";
                     stmt.execute(lineSql);
                 }
@@ -438,10 +445,17 @@ public class OrderEditorDialog extends JDialog {
                 String deleteSql = "DELETE FROM order_line WHERE order_id = " + orderId;
                 stmt.execute(deleteSql);
                 
+                // Get max line_id to ensure globally unique line IDs
+                ResultSet rs = stmt.executeQuery("SELECT MAX(line_id) FROM order_line");
+                long nextLineId = 1;
+                if (rs.next()) {
+                    nextLineId = rs.getLong(1) + 1;
+                }
+                
                 for (int i = 0; i < tempLines.size(); i++) {
                     TempLine line = tempLines.get(i);
                     String lineSql = "INSERT INTO order_line (line_id, order_id, prod_id, prod_name, quantity, unit_price) VALUES (" +
-                        (i + 1) + ", " + orderId + ", " + line.prodId + ", '" + line.prodName.replace("'", "''") + "', " +
+                        (nextLineId + i) + ", " + orderId + ", " + line.prodId + ", '" + line.prodName.replace("'", "''") + "', " +
                         line.qty + ", " + line.price + ")";
                     stmt.execute(lineSql);
                 }

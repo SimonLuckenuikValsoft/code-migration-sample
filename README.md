@@ -29,16 +29,43 @@ The easiest way to get started is to use the provided run script:
 run.bat
 ```
 
-These scripts will automatically download all dependencies and start the application.
+### What the Run Scripts Do
+
+The run scripts perform the following steps automatically:
+
+1. **Check for Java** - Verifies Java is installed (Linux/Mac will attempt auto-install if missing)
+2. **Clean & Compile** - Runs `mvn clean compile` to ensure fresh build
+3. **Start Application** - Launches the Order Entry desktop application
+
+### Command Line Options
+
+| Option | Description |
+|--------|-------------|
+| `--reset` or `-r` | Deletes the database file (`orderentry.db`) before starting, giving you a fresh database with sample data |
+
+**Examples:**
+```bash
+# Normal run - clean, compile, and start
+./run.sh           # Linux/Mac
+run.bat            # Windows
+
+# Reset database and run - useful if data gets corrupted or you want to start fresh
+./run.sh --reset   # Linux/Mac
+run.bat --reset    # Windows
+run.bat /reset     # Windows (alternative)
+run.bat -r         # Windows (short form)
+```
 
 ### Manual Run
 
 If you prefer to run manually:
 
 ```bash
-./mvnw compile
+./mvnw clean compile
 ./mvnw exec:java
 ```
+
+To reset the database manually, delete the `orderentry.db` file before running.
 
 ## Features
 

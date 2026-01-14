@@ -10,6 +10,12 @@ echo ""
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd "$SCRIPT_DIR"
 
+# Check for reset flag
+RESET_DB=0
+if [[ "$1" == "--reset" || "$1" == "-r" ]]; then
+    RESET_DB=1
+fi
+
 OS="$(uname -s)"
 case "${OS}" in
     Linux*)     MACHINE=Linux;;
@@ -61,12 +67,26 @@ echo ""
 
 ./mvnw clean compile -q
 
+if [ $? -ne 0 ]; then
+    echo "Build failed!"
+    exit 1
+fi
+
+# Delete database if reset flag was provided
+if [ $RESET_DB -eq 1 ]; then
+    echo ""
+    echo "Resetting database..."
+    rm -f orderentry.db
+    echo "Database reset complete."
+fi
+
 echo ""
 echo "=========================================="
 echo "Setup Complete!"
 echo "=========================================="
 echo ""
 echo "Starting application..."
+echo "(Use \"./run.sh --reset\" to reset the database)"
 echo ""
 
 ./mvnw -q exec:java
