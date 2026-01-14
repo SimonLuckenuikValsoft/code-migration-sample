@@ -1,3 +1,10 @@
+/**
+ * OrdersScreen.java
+ * 
+ * Screen for viewing and managing customer orders.
+ * Shows all orders with calculated totals and allows creating/editing orders.
+ * Performs all database operations inline for performance.
+ */
 package aim.legacy.ui;
 
 import aim.legacy.db.DB;
@@ -53,10 +60,14 @@ public class OrdersScreen extends JPanel {
         add(buttonPanel, BorderLayout.SOUTH);
     }
     
+    // Refresh order list when returning to this screen
+    // Ensures latest data is always displayed
     public void refresh() {
         loadOrders();
     }
     
+    // Load all orders from database with pre-calculated totals
+    // Formats currency values for display in table
     private void loadOrders() {
         tableModel.setRowCount(0);
         try {
@@ -85,6 +96,8 @@ public class OrdersScreen extends JPanel {
         }
     }
     
+    // Open new order dialog
+    // Dialog handles all order creation logic including line items
     private void createOrder() {
         OrderEditorDialog dialog = new OrderEditorDialog((Frame) SwingUtilities.getWindowAncestor(this), 0);
         dialog.setVisible(true);

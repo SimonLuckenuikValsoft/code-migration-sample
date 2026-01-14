@@ -1,3 +1,9 @@
+/**
+ * DB.java
+ * 
+ * Database connection manager for the Order Entry System.
+ * Handles SQLite database initialization and connection pooling.
+ */
 package aim.legacy.db;
 
 import java.sql.*;
@@ -7,6 +13,8 @@ public class DB {
     private static Connection conn;
     private static final String DB_FILE = "orderentry.db";
     
+    // Returns database connection, creates new if needed
+    // Note: Connection is thread-safe due to synchronization
     public static Connection getConn() {
         if (conn == null) {
             try {
@@ -21,6 +29,8 @@ public class DB {
         return conn;
     }
     
+    // Initialize database schema and seed with initial data if empty
+    // Creates all required tables with proper foreign keys
     private static void initDB() {
         try {
             Statement stmt = conn.createStatement();
@@ -66,6 +76,8 @@ public class DB {
         }
     }
     
+    // Seed database with sample customer and product data
+    // Also creates a few test orders to demonstrate the system
     private static void seedData() throws SQLException {
         Statement stmt = conn.createStatement();
         
@@ -75,6 +87,7 @@ public class DB {
         stmt.execute("INSERT INTO customer VALUES (4, 'Alice Williams', 'alice.w@email.com', '555-0104', '321 Elm St')");
         stmt.execute("INSERT INTO customer VALUES (5, 'Charlie Brown', 'charlie.b@email.com', '555-0105', '654 Maple Dr')");
         
+        // Product catalog with standard pricing
         stmt.execute("INSERT INTO product VALUES (1, 'Laptop', 1299.99)");
         stmt.execute("INSERT INTO product VALUES (2, 'Smartphone', 899.99)");
         stmt.execute("INSERT INTO product VALUES (3, 'Tablet', 599.99)");
@@ -86,11 +99,14 @@ public class DB {
         stmt.execute("INSERT INTO product VALUES (9, 'USB Hub', 39.99)");
         stmt.execute("INSERT INTO product VALUES (10, 'Desk Lamp', 49.99)");
         
+        // Sample orders with pre-calculated totals
+        // Order 1: Total should be around $2100 with 5% discount applied
         stmt.execute("INSERT INTO orders VALUES (1, 1, 'John Doe', '2024-01-15 10:30:00', 1929.97, 96.50, 274.99, 2108.46)");
         stmt.execute("INSERT INTO order_line VALUES (1, 1, 1, 'Laptop', 1, 1299.99)");
         stmt.execute("INSERT INTO order_line VALUES (2, 1, 3, 'Tablet', 1, 599.99)");
         stmt.execute("INSERT INTO order_line VALUES (3, 1, 6, 'Mouse', 1, 29.99)");
         
+        // Order 2: Smaller order with standard tax calculation
         stmt.execute("INSERT INTO orders VALUES (2, 2, 'Jane Smith', '2024-01-16 14:15:00', 549.98, 27.50, 78.38, 600.86)");
         stmt.execute("INSERT INTO order_line VALUES (4, 2, 4, 'Monitor', 1, 349.99)");
         stmt.execute("INSERT INTO order_line VALUES (5, 2, 7, 'Headphones', 1, 199.99)");
@@ -98,6 +114,8 @@ public class DB {
         stmt.close();
     }
     
+    // Close database connection when application shuts down
+    // Should be called in shutdown hook or exit handler
     public static void closeConn() {
         if (conn != null) {
             try {

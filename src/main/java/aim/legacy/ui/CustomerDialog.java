@@ -1,3 +1,10 @@
+/**
+ * CustomerDialog.java
+ * 
+ * Dialog for adding or editing customer information.
+ * Validates input and returns customer data to calling screen.
+ * Uses simple modal dialog pattern for user interaction.
+ */
 package aim.legacy.ui;
 
 import javax.swing.*;

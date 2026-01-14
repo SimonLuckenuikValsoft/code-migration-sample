@@ -72,16 +72,6 @@
                             <mainClass>aim.legacy.ui.MainApp</mainClass>
                         </configuration>
                     </execution>
-                    <!-- Run scenario runner -->
-                    <execution>
-                        <id>scenario-runner</id>
-                        <goals>
-                            <goal>java</goal>
-                        </goals>
-                        <configuration>
-                            <mainClass>aim.legacy.scenarios.ScenarioRunner</mainClass>
-                        </configuration>
-                    </execution>
                 </executions>
             </plugin>
         </plugins>

@@ -1,12 +1,14 @@
+/**
+ * Product.java
+ * 
+ * Represents a product in the catalog.
+ * Includes pricing information and product details.
+ */
 package aim.legacy.domain;
 
 import java.math.BigDecimal;
 import java.util.Objects;
 
-/**
- * Product entity - represents a product that can be ordered.
- * Legacy pattern: Simple POJO with getters/setters.
- */
 public class Product {
     private Long id;
     private String name;

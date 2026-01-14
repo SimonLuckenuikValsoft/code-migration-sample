@@ -1,3 +1,9 @@
+/**
+ * Order.java
+ * 
+ * Represents a customer order with line items.
+ * Manages order totals, discounts, and tax calculations.
+ */
 package aim.legacy.domain;
 
 import java.math.BigDecimal;
@@ -6,10 +12,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-/**
- * Order entity - represents a customer order.
- * Legacy pattern: Simple POJO with getters/setters.
- */
 public class Order {
     private Long id;
     private Long customerId;

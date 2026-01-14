@@ -1,3 +1,11 @@
+/**
+ * OrderEditorDialog.java
+ * 
+ * Complex dialog for creating and editing orders.
+ * Handles customer selection, line items, and automatic pricing calculations.
+ * Implements temp-table pattern for managing line items before save.
+ * All business logic and database operations are contained within this dialog.
+ */
 package aim.legacy.ui;
 
 import aim.legacy.db.DB;
@@ -26,8 +34,11 @@ public class OrderEditorDialog extends JDialog {
     private JLabel totalLabel;
     private JTextArea statusArea;
     
+    // Tax rate is fixed at 14.975% for all orders
     private static final BigDecimal TAX_RATE = new BigDecimal("0.14975");
     
+    // Temp-table pattern: holds line items in memory before committing to database
+    // This is similar to Progress ABL temp-tables for transaction buffering
     private class TempLine {
         long lineId;
         long prodId;
@@ -214,6 +225,9 @@ public class OrderEditorDialog extends JDialog {
         }
     }
     
+    // Calculate order totals including discounts and tax
+    // Discount tiers: 5% over $600, 10% over $1200, 15% over $2500
+    // Tax is applied to subtotal after discount
     private void calculateTotals() {
         BigDecimal subtotal = BigDecimal.ZERO;
         for (TempLine line : tempLines) {

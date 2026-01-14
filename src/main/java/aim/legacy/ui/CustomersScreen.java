@@ -1,3 +1,10 @@
+/**
+ * CustomersScreen.java
+ * 
+ * Screen for managing customer records.
+ * Provides functionality to view, add, edit, delete, and search customers.
+ * All database operations are performed directly in this class for simplicity.
+ */
 package aim.legacy.ui;
 
 import aim.legacy.db.DB;
@@ -63,10 +70,14 @@ public class CustomersScreen extends JPanel {
         add(buttonPanel, BorderLayout.SOUTH);
     }
     
+    // Refresh the customer list from database
+    // Called when switching back to this screen
     public void refresh() {
         loadCustomers();
     }
     
+    // Load all customers from database into the table
+    // Executes direct SQL query and populates table model
     private void loadCustomers() {
         tableModel.setRowCount(0);
         try {
@@ -93,6 +104,8 @@ public class CustomersScreen extends JPanel {
         }
     }
     
+    // Search customers by name using LIKE query
+    // Note: Uses string concatenation for SQL (should use prepared statements)
     private void searchCustomers() {
         String query = searchField.getText().trim();
         if (query.isEmpty()) {
@@ -125,6 +138,8 @@ public class CustomersScreen extends JPanel {
         }
     }
     
+    // Open dialog to add new customer
+    // Generates next ID by finding MAX(cust_id) + 1
     private void addCustomer() {
         CustomerDialog dialog = new CustomerDialog((Frame) SwingUtilities.getWindowAncestor(this), 0, "", "", "", "");
         dialog.setVisible(true);
@@ -157,6 +172,8 @@ public class CustomersScreen extends JPanel {
         }
     }
     
+    // Edit existing customer record
+    // Opens dialog with current values pre-populated
     private void editCustomer() {
         int selectedRow = customerTable.getSelectedRow();
         if (selectedRow < 0) {
@@ -193,6 +210,8 @@ public class CustomersScreen extends JPanel {
         }
     }
     
+    // Delete customer from database
+    // Uses CASCADE delete to remove associated orders
     private void deleteCustomer() {
         int selectedRow = customerTable.getSelectedRow();
         if (selectedRow < 0) {

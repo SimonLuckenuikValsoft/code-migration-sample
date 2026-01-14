@@ -1,12 +1,14 @@
+/**
+ * OrderLine.java
+ * 
+ * Represents a single line item within an order.
+ * Contains product reference, quantity, and pricing information.
+ */
 package aim.legacy.domain;
 
 import java.math.BigDecimal;
 import java.util.Objects;
 
-/**
- * OrderLine entity - represents a line item in an order.
- * Legacy pattern: Simple POJO with getters/setters.
- */
 public class OrderLine {
     private Long id;
     private Long productId;
@@ -65,10 +67,8 @@ public class OrderLine {
         this.unitPrice = unitPrice;
     }
 
-    /**
-     * Calculate line total (qty * unit price).
-     * Legacy pattern: calculation logic in entity.
-     */
+    // Calculates the total for this line item
+    // Returns quantity multiplied by unit price with proper rounding
     public BigDecimal getLineTotal() {
         return unitPrice.multiply(BigDecimal.valueOf(quantity));
     }

@@ -1,3 +1,10 @@
+/**
+ * MainApp.java
+ * 
+ * Main application window and entry point.
+ * Provides navigation between customer and order management screens.
+ * Uses CardLayout for switching between different views.
+ */
 package aim.legacy.ui;
 
 import aim.legacy.db.DB;
@@ -14,6 +21,8 @@ public class MainApp extends JFrame {
     private CustomersScreen customersScreen;
     private OrdersScreen ordersScreen;
     
+    // Initialize database connection on startup
+    // This ensures the database is ready before any screens load
     static {
         DB.getConn();
     }
@@ -28,6 +37,8 @@ public class MainApp extends JFrame {
         setLocationRelativeTo(null);
     }
     
+    // Set up the main window with menu bar and content panels
+    // Creates all screens and adds them to the card layout manager
     private void setupUI() {
         setJMenuBar(createMenuBar());
         
@@ -45,6 +56,8 @@ public class MainApp extends JFrame {
         showCustomersScreen();
     }
     
+    // Creates the application menu bar with navigation options
+    // Includes shortcuts for quick navigation between screens
     private JMenuBar createMenuBar() {
         JMenuBar menuBar = new JMenuBar();
         
@@ -72,16 +85,22 @@ public class MainApp extends JFrame {
         return menuBar;
     }
     
+    // Switch to customers screen and refresh the data
+    // Uses card layout to swap views without creating new instances
     public void showCustomersScreen() {
         customersScreen.refresh();
         cardLayout.show(mainPanel, "customers");
     }
     
+    // Switch to orders screen and refresh the data
+    // Orders screen shows all customer orders with totals
     public void showOrdersScreen() {
         ordersScreen.refresh();
         cardLayout.show(mainPanel, "orders");
     }
     
+    // Application entry point
+    // Sets look and feel to match OS and launches the main window
     public static void main(String[] args) {
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());

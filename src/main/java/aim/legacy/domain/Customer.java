@@ -1,11 +1,13 @@
+/**
+ * Customer.java
+ * 
+ * Represents a customer entity in the order management system.
+ * Contains all customer contact information and validation logic.
+ */
 package aim.legacy.domain;
 
 import java.util.Objects;
 
-/**
- * Customer entity - represents a customer in the order entry system.
- * Legacy pattern: Simple POJO with getters/setters.
- */
 public class Customer {
     private Long id;
     private String name;
